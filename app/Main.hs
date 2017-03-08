@@ -3,7 +3,9 @@
 module Main where
 
 import Lib
-import Lucid
 
 main :: IO ()
-main = convert "text"
+main = do
+  src <- readFile "src.html"
+  putStrLn $ convertToLucid $ makeDocFromHtml src
+

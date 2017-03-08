@@ -1,8 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Lib where
 
 import qualified Text.HTML.TagSoup as TGS
 import Lucid
 import Data.Maybe
+import Data.Text (strip, pack)
 
 type TGSTag = TGS.Tag String 
 
@@ -35,8 +38,11 @@ convertToLucid :: Tag -> String
 convertToLucid tag = convertToLucidWithOffset 0 tag
   where
   convertToLucidWithOffset :: Int -> Tag -> String
-  convertToLucidWithOffset offset tag@((Tag (TGS.TagOpen name attr) [Tag (TGS.TagText content) [] _] _)) =
-    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " " ++ show content ++ "\n"
+  convertToLucidWithOffset offset tag@(Tag (TGS.TagText content) [] _) = (take offset $ repeat ' ') ++ show content ++ "\n"
+  convertToLucidWithOffset offset tag@(Tag (TGS.TagOpen _ _) [] _) =
+    (take offset $ repeat ' ') ++ (makeLucidFunction tag)  ++ "\n"
+  convertToLucidWithOffset offset tag@((Tag (TGS.TagOpen name attr) ((Tag (TGS.TagText content) [] _):children) _)) =
+    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " " ++ show content ++ "\n" ++ (concat $ convertToLucidWithOffset (offset + 2) <$> children)
   convertToLucidWithOffset offset tag@(Tag (TGS.TagOpen _ _) children _) =
     (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " $ do \n" ++ (concat $ convertToLucidWithOffset (offset + 2) <$> children)
 
@@ -44,8 +50,16 @@ makeDocFromHtml :: String -> Tag
 makeDocFromHtml html = buildHtmlTree $ TGS.parseTags html
 
 buildHtmlTree :: [TGSTag] -> Tag
-buildHtmlTree (x:xs) = addTags (makeTag x) xs
+buildHtmlTree (x:xs) = reverseChildren $ addTags (makeTag x) $ filterNewlines xs
   where
+    filterNewlines :: [TGSTag] -> [TGSTag]
+    filterNewlines tx = filter (not.isNewLine) tx
+      where
+      isNewLine :: TGSTag -> Bool
+      isNewLine (TGS.TagText t) = (strip(pack t) == "")
+      isNewLine _ = False
+    reverseChildren :: Tag -> Tag
+    reverseChildren (Tag t children st) = Tag t (reverseChildren <$> (reverse children)) st
     makeTag :: TGSTag -> Tag
     makeTag tgst@(TGS.TagOpen n attr) = Tag tgst [] Open
     makeTag tgst@(TGS.TagText n) = Tag tgst [] Closed
