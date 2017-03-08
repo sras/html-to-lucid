@@ -33,11 +33,7 @@ convert html = return ()
 
 makeLucidFunction :: Tag -> String
 makeLucidFunction (Tag (TGS.TagOpen n []) _ _) = n ++ "_"
-makeLucidFunction (Tag (TGS.TagOpen n xs) [] _) = n ++ "_" ++ " [" ++  (unpack $ intercalate "," $ makeAttibute <$> xs) ++ "]"
-  where
-    makeAttibute :: (String, String) -> Text
-    makeAttibute (a, v) = pack (a ++ "_" ++ " " ++ (show v))
-makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) = "with " ++ n ++ "_" ++ " [" ++  (unpack $ intercalate "," $ makeAttibute <$> xs) ++ "]"
+makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) =  n ++ "_" ++ " [" ++  (unpack $ intercalate "," $ makeAttibute <$> xs) ++ "]"
   where
     makeAttibute :: (String, String) -> Text
     makeAttibute (a, v) = pack (a ++ "_" ++ " " ++ (show v))

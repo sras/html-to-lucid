@@ -20,7 +20,6 @@ library
                        , lucid
                        , tagsoup
                        , text
-                       , template-haskell
   default-language:    Haskell2010
 
 executable lucid-from-html-exe
