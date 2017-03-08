@@ -1,11 +1,8 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Lib where
 
 import qualified Text.HTML.TagSoup as TGS
 import Lucid
 import Data.Maybe
-import Language.Haskell.TH
 
 type TGSTag = TGS.Tag String 
 
@@ -31,17 +28,17 @@ prettyPrint tag = prettyPrint' 0 tag
 convert :: String -> IO ()
 convert html = return ()
 
-convertToLucid :: Tag -> Q [Dec]
-convertToLucid tag = do
-    exTag <- makeExpressionForTag tag
-    return $ [FunD (mkName "toLucid") [Clause [] (NormalB exTag) []]]
+makeLucidFunction :: Tag -> String
+makeLucidFunction (Tag (TGS.TagOpen n _) _ _) = n ++ "_"
+
+convertToLucid :: Tag -> String
+convertToLucid tag = convertToLucidWithOffset 0 tag
   where
-    makeExpressionForTag :: Tag -> Q Exp
-    makeExpressionForTag (Tag (TGS.TagOpen name attr) [] _) = [e| name (toHtml "") |]
-    makeExpressionForTag (Tag (TGS.TagOpen name attr) [Tag (TGS.TagText content) [] _] _) = [e| name (toHtml content) |]
-    makeExpressionForTag (Tag (TGS.TagOpen name attr) children _) = do
-      exp <- mapM makeExpressionForTag children
-      return $ foldl AppE (VarE $ mkName (name ++ "_")) exp 
+  convertToLucidWithOffset :: Int -> Tag -> String
+  convertToLucidWithOffset offset tag@((Tag (TGS.TagOpen name attr) [Tag (TGS.TagText content) [] _] _)) =
+    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " " ++ show content ++ "\n"
+  convertToLucidWithOffset offset tag@(Tag (TGS.TagOpen _ _) children _) =
+    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " $ do \n" ++ (concat $ convertToLucidWithOffset (offset + 2) <$> children)
 
 makeDocFromHtml :: String -> Tag
 makeDocFromHtml html = buildHtmlTree $ TGS.parseTags html
