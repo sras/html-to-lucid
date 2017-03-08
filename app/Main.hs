@@ -2,10 +2,11 @@
 
 module Main where
 
+import System.IO
 import Lib
 
 main :: IO ()
 main = do
-  src <- readFile "src.html"
+  src <- hGetContents stdin
   putStrLn $ convertToLucid $ makeDocFromHtml src
 
