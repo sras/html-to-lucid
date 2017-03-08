@@ -5,7 +5,8 @@ module Lib where
 import qualified Text.HTML.TagSoup as TGS
 import Lucid
 import Data.Maybe
-import Data.Text (Text, strip, pack, unpack, intercalate)
+import Data.Text (Text, strip, pack, unpack, intercalate, concat)
+import Cases
 
 type TGSTag = TGS.Tag String 
 
@@ -32,11 +33,12 @@ convert :: String -> IO ()
 convert html = return ()
 
 makeLucidFunction :: Tag -> String
-makeLucidFunction (Tag (TGS.TagOpen n []) _ _) = n ++ "_"
+makeLucidFunction (Tag (TGS.TagOpen n []) [] _) = n ++ "_ []"
+makeLucidFunction (Tag (TGS.TagOpen n []) _  _) = n ++ "_ "
 makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) =  n ++ "_" ++ " [" ++  (unpack $ intercalate "," $ makeAttibute <$> xs) ++ "]"
   where
     makeAttibute :: (String, String) -> Text
-    makeAttibute (a, v) = pack (a ++ "_" ++ " " ++ (show v))
+    makeAttibute (a, v) = Data.Text.concat [(camelize $ pack a), "_ " , (pack $ show v)]
 
 convertToLucid :: Tag -> String
 convertToLucid tag = convertToLucidWithOffset 0 tag
@@ -45,10 +47,14 @@ convertToLucid tag = convertToLucidWithOffset 0 tag
   convertToLucidWithOffset offset tag@(Tag (TGS.TagText content) [] _) = (take offset $ repeat ' ') ++ show content ++ "\n"
   convertToLucidWithOffset offset tag@(Tag (TGS.TagOpen _ _) [] _) =
     (take offset $ repeat ' ') ++ (makeLucidFunction tag)  ++ "\n"
-  convertToLucidWithOffset offset tag@((Tag (TGS.TagOpen name attr) ((Tag (TGS.TagText content) [] _):children) _)) =
-    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " " ++ show content ++ "\n" ++ (concat $ convertToLucidWithOffset (offset + 2) <$> children)
-  convertToLucidWithOffset offset tag@(Tag (TGS.TagOpen _ _) children _) =
-    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " $ do \n" ++ (concat $ convertToLucidWithOffset (offset + 2) <$> children)
+  convertToLucidWithOffset offset tag@((Tag (TGS.TagOpen name attr) ((Tag (TGS.TagText content) [] _):[]) _)) =
+    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " " ++ show content ++ "\n"
+  convertToLucidWithOffset offset tag@((Tag (TGS.TagOpen _ _) children _)) =
+    (take offset $ repeat ' ') ++ (makeLucidFunction tag) ++ " " ++ (generateChildCode (offset+2) children) 
+  generateChildCode :: Int -> [Tag] -> String
+  generateChildCode offset [] = ""
+  generateChildCode offset children = " $ do \n" ++ (Prelude.concat $ convertToLucidWithOffset offset <$> children)
+
 
 makeDocFromHtml :: String -> Tag
 makeDocFromHtml html = buildHtmlTree $ TGS.parseTags html
