@@ -5,7 +5,7 @@ module Lib where
 import qualified Text.HTML.TagSoup as TGS
 import Lucid
 import Data.Maybe
-import Data.Text (strip, pack)
+import Data.Text (Text, strip, pack, unpack, intercalate)
 
 type TGSTag = TGS.Tag String 
 
@@ -32,7 +32,15 @@ convert :: String -> IO ()
 convert html = return ()
 
 makeLucidFunction :: Tag -> String
-makeLucidFunction (Tag (TGS.TagOpen n _) _ _) = n ++ "_"
+makeLucidFunction (Tag (TGS.TagOpen n []) _ _) = n ++ "_"
+makeLucidFunction (Tag (TGS.TagOpen n xs) [] _) = n ++ "_" ++ " [" ++  (unpack $ intercalate "," $ makeAttibute <$> xs) ++ "]"
+  where
+    makeAttibute :: (String, String) -> Text
+    makeAttibute (a, v) = pack (a ++ "_" ++ " " ++ (show v))
+makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) = "with " ++ n ++ "_" ++ " [" ++  (unpack $ intercalate "," $ makeAttibute <$> xs) ++ "]"
+  where
+    makeAttibute :: (String, String) -> Text
+    makeAttibute (a, v) = pack (a ++ "_" ++ " " ++ (show v))
 
 convertToLucid :: Tag -> String
 convertToLucid tag = convertToLucidWithOffset 0 tag
