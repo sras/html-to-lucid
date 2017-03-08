@@ -6,7 +6,4 @@ import System.IO
 import Lib
 
 main :: IO ()
-main = do
-  src <- hGetContents stdin
-  putStrLn $ convertToLucid $ makeDocFromHtml src
-
+main = hGetContents stdin >>= putStr.makeTemplate

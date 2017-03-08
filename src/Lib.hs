@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib where
+module Lib (
+  makeTemplate
+) where
 
 import qualified Text.HTML.TagSoup as TGS
 import Data.Maybe
@@ -38,6 +40,9 @@ makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) =  n ++ "_" ++ " [" ++  unpack (i
 
 indent :: Int -> String
 indent offset = replicate offset ' '
+
+makeTemplate :: String -> String
+makeTemplate = convertToLucid.makeDocFromHtml
 
 convertToLucid :: Tag -> String
 convertToLucid = convertToLucidWithOffset 0
