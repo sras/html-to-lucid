@@ -55,6 +55,7 @@ convertToLucid = convertToLucidWithOffset 0
     indent offset ++ makeLucidFunction tag ++ " " ++ show content ++ "\n"
   convertToLucidWithOffset offset tag@(Tag (TGS.TagOpen _ _) children _) =
     indent offset ++ makeLucidFunction tag ++ " " ++ generateChildCode (offset+2) children 
+  convertToLucidWithOffset _ _ = ""
   generateChildCode :: Int -> [Tag] -> String
   generateChildCode _ [] = ""
   generateChildCode offset children = " $ do \n" ++ Prelude.concat (convertToLucidWithOffset offset <$> children)
