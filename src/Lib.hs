@@ -33,7 +33,7 @@ prettyPrint = prettyPrint' 0
 makeLucidFunction :: Tag -> String
 makeLucidFunction (Tag (TGS.TagOpen n []) [] _) = n ++ "_ []"
 makeLucidFunction (Tag (TGS.TagOpen n []) _  _) = n ++ "_ "
-makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) =  n ++ "_" ++ " [" ++  unpack (intercalate "," $ makeAttibute <$> xs) ++ "]"
+makeLucidFunction (Tag (TGS.TagOpen n xs) _ _) =  n ++ "_" ++ " [" ++  unpack (intercalate ", " $ makeAttibute <$> xs) ++ "]"
   where
     makeAttibute :: (String, String) -> Text
     makeAttibute (a, v) = Data.Text.concat [camelize $ pack a, "_ " , pack $ show v]
